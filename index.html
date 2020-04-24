@@ -1,9 +1,420 @@
+<!doctype html>
 <html>
     <head>
-    
+        <meta name="author" content="lifeijie" />
+        <meta name="description" content="这是首页" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+        <title>首页</title>
+        <style>
+            h1,h2,p{
+                margin:0;
+            }
+            h1{
+                line-height:30px;
+            }
+            h2{
+                line-height:30px;
+            }
+            p{
+                line-height:30px;
+            }
+            #start{
+                display:block;
+                width:50px;
+                height:50px;
+                border:2px solid #999;
+                border-radius:50px;
+                -webkit-border-radius:50px;
+                -moz-border-radius:50px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                margin-left:-25px;
+                cursor:pointer;
+            }
+            #start:after{
+                display:block;
+                content:"";
+                width:0;
+                height:0;
+                border-width:15px 0 15px 30px;
+                border-style: solid;
+                border-color: transparent #999 transparent;
+                position:absolute;
+                left:13px;
+                top:8px;
+            }
+        </style>
     </head>
-    
     <body>
-        github.io
+        <div style="text-align:center;">
+            <h1 style="line-height:30px;font-size:24px;font-weight:blod;text-align:center;">贪吃蛇</h1>
+            <p>分数:<span id="score"></span></p>
+            <div id="snake" style="text-align:center;display:inline-block;position:relative;"></div>
+        </div>
+        
+        <script src="js/jquery-1.11.3.min.js"></script>    
+        <script>
+            $(function(){
+                /**
+                    需实现的功能：
+                        1、窗口不可见时自动暂停，可见时自动开始；
+                        2、键盘上下左右键控制移动方向；
+                        3、键盘Enter键控制暂停、开始；
+                        4、参数配置蛇的初始长度；
+                        5、参数配置每次食物的个数；
+                        
+                        6、自动移动时间，随游戏时间的长度自动变短，倍数为0.5；
+                **/
+                
+                function snake(options){
+                    this.direct = null;            //37左、38上、39右、40下
+                    this.interval = 500;           //定时器时间
+                    this.runing = false;           //默认不运行
+                    this.snakeCoords = [];         //蛇坐标集
+                    this.foods = [];               //食物为空
+                    this.score = 0;                //分数
+                    this.everyScore = 10;          //每次吃一个得分
+                    this.gameOver = false;       
+                    this.timer = null;
+                    this.id = options.id;
+                    this.width = options.width;
+                    this.height = options.height;
+                    this.unit = options.unit;
+                    this.snakeColor = options.snakeColor;
+                    this.foodColor = options.foodColor;
+                    this.coordColor = "#ccc";
+                    
+                    this.init();
+                    this.attachEvent();
+                }
+                
+                //定义方法
+                snake.prototype = {
+                    //生成单个坐标
+                    createCoord: function(snakeCoords){
+                        var padding = 3;
+                        var randomW = Math.ceil(Math.random() * this.width);
+                        var randomH = Math.ceil(Math.random() * this.height);
+                        randomW = randomW < padding ? padding : randomW;
+                        randomW = randomW > this.width - padding ? this.width - padding : randomW;
+                        randomH = randomH < padding ? padding : randomH;
+                        randomH = randomH > this.height - padding ? this.height - padding : randomH;
+                        var newCoord = {
+                            x: randomW, 
+                            y: randomH
+                        };
+                        if(checkCoord(newCoord, snakeCoords) != -1){
+                            return this.createCoord();
+                        }
+                        return newCoord;
+                    },
+                    
+                    //批量生成坐标
+                    //@num: 坐标数量
+                    createCoords: function(snakeCoords, num, sort){
+                        var newCoords = [];
+                        if(sort){
+                            var coord = this.createCoord(snakeCoords);
+                            for(var i=0; i<num; i++){
+                                newCoords.unshift({x: coord.x+i, y: coord.y});
+                            }
+                        }else{
+                            for(var i=0; i<num; i++){
+                                var coord = this.createCoord(snakeCoords);
+                                newCoords.unshift(coord);
+                            }
+                        }
+                        return newCoords;
+                    },
+                    
+                    //绘制坐标
+                    paint: function(coord, coordColor){
+                        var color = coordColor || this.coordColor;
+                        $("#"+this.id).find("table").find("tr:eq("+coord.y+")").find("td:eq("+coord.x+")").css({"background": color});
+                    },
+                    
+                    //绘制蛇
+                    paintSnake: function(){
+                        if(this.snakeCoords.length == 0){
+                            console.log("蛇坐标集为空!");
+                            return false;
+                        }
+                        for(var i=this.snakeCoords.length-1; i>=0; i--){
+                            var coord = this.snakeCoords[i];
+                            if(i == this.snakeCoords.length - 1){
+                                this.paint(coord, "none");
+                            }else{
+                                this.paint(coord, this.snakeColor);
+                            }
+                        }
+                    },
+                    
+                    //绘制食物
+                    paintFood: function(coords){
+                        for(var i=0; i<coords.length; i++){
+                            this.paint(coords[i], this.foodColor);
+                        }
+                    },
+                    
+                    //蛇移动
+                    snakeMove: function(){
+                        if(this.gameOver){
+                            return false;
+                        }
+                        var nextCoord = JSON.parse(JSON.stringify(this.snakeCoords[0]));
+                        switch(this.direct){
+                            case 37:
+                                nextCoord.x--;
+                                if(nextCoord.x == -1){
+                                    this.gameOver = true;
+                                }
+                                break;
+                            case 38:
+                                nextCoord.y--;
+                                if(nextCoord.y == -1){
+                                    this.gameOver = true;
+                                }
+                                break;
+                            case 39:
+                                nextCoord.x++;
+                                if(nextCoord.x == this.width){
+                                    this.gameOver = true;
+                                }
+                                break;
+                            case 40:
+                                nextCoord.y++;
+                                if(nextCoord.y == this.height){
+                                    this.gameOver = true;
+                                }
+                                break;
+                        }
+                        var lenth = this.snakeCoords.length - 1;
+                        
+                        var foodIndex = checkCoord(nextCoord, this.foods);
+                        
+                        if(foodIndex != -1){
+                            this.score += this.everyScore;
+                            $("#score").text(this.score);
+                            this.foods.splice(foodIndex, 1);
+                            lenth++;
+                        }
+                        
+                        var newCoords = [];
+                        for(var i=0; i<lenth; i++){
+                            var oldCoord = this.snakeCoords[i];
+                            if(i < lenth-1){
+                                if(oldCoord.x == nextCoord.x && oldCoord.y == nextCoord.y){
+                                    this.gameOver = true;
+                                }
+                            }
+                            newCoords.push(oldCoord);
+                        }
+                        
+                        if(this.gameOver){
+                            this.over();
+                            return false;
+                        }
+                        
+                        newCoords.unshift(nextCoord);
+                        
+                        this.snakeCoords = newCoords;
+                        
+                        this.paintSnake();
+                        
+                        if(this.foods.length == 0){
+                            this.foods = this.createCoords(this.snakeCoords, 2);
+                            this.paintFood(this.foods);
+                        }
+                    },
+                    
+                    //自动移动
+                    autoMove: function(){
+                        var _this = this;
+                        if(_this.gameOver){
+                            return false;
+                        }
+                        if(_this.timer){
+                            _this.pause();
+                        }
+                        _this.timer = setInterval(function(){
+                            _this.snakeMove();
+                        }, _this.interval);
+                    },
+                    
+                    //暂停
+                    pause: function(){
+                        clearInterval(this.timer);
+                        this.timer = null;
+                    },
+                    
+                    //结束
+                    over: function(){
+                        this.gameOver = true;
+                        clearInterval(this.timer);
+                        this.timer = null;
+                        this.runing = false;
+                        alert('Game Over!');
+                    },
+                    
+                    //初始化蛇
+                    initSnake: function(){
+                        $(".mode").css({"display": "block"});
+                        $("#score").text("");
+                        this.gameOver = false;
+                        this.runing = false;
+                        this.score = 0;
+                        //清空坐标
+                        this.foods = [];
+                        $("#"+this.id).find("table").find("td").css({"background":"none"});
+                        //生成蛇
+                        this.snakeCoords = this.createCoords([], 3, true);
+                        this.paintSnake();
+                    },
+                    
+                    //绑定事件
+                    attachEvent: function(){
+                        var _this = this;
+                        
+                        $(document).on("keydown", function(key){
+                            if(_this.gameOver){
+                                return false;
+                            }
+                            if(!_this.runing){
+                                return false;
+                            }
+                            if(key.keyCode == 37 || key.keyCode == 38 || key.keyCode == 39 || key.keyCode == 40){
+                                if(key.keyCode == 37 && _this.direct == 39 ||
+                                   key.keyCode == 38 && _this.direct == 40 ||
+                                   key.keyCode == 39 && _this.direct == 37 ||
+                                   key.keyCode == 40 && _this.direct == 38){
+                                    return false;
+                                }
+                                _this.direct = key.keyCode;
+                                _this.pause();
+                                _this.snakeMove();
+                                _this.autoMove();
+                            }else if(key.keyCode == 13){
+                                if(_this.timer){
+                                    _this.pause();
+                                }else{
+                                    _this.direct = 39; //默认向右
+                                    _this.autoMove();
+                                }
+                            }
+                        });
+                        
+                        //重置
+                        $("#reset").on("click", function(){
+                            if(_this.timer){
+                                _this.pause();
+                            }
+                            _this.initSnake();
+                        });
+                        
+                        //开始
+                        $("#start").on("click", function(){
+                            $(".mode").css({"display": "none"});
+                            _this.runing = true;
+                        });
+                        
+                        var visProp = getHiddenProp();
+                        if (visProp) {
+                            var evtname = visProp.replace(/[H|h]idden/, '') + 'visibilitychange';
+                            document.addEventListener(evtname, function () {
+                                if(!_this.runing){
+                                    return false;
+                                }
+                                if(document[getVisibilityState()] == "hidden"){
+                                    if(_this.timer){
+                                        _this.pause();
+                                    }
+                                }else{
+                                    _this.autoMove();
+                                }
+                            });
+                        }
+                    },
+                    
+                    //初始化
+                    //绘制表格
+                    init: function(){
+                        var _this = this;
+                        var b = '<div class="mode" style="width:100%;height:100%;background:rgba(0,0,0,0.3);position:absolute;left:0;top:0;"><button id="start"></button></div>';
+                        var d = '<p><button id="reset">重置</button></p>'+
+                                '<div style="text-align:left;">'+
+                                    '<h2>操作说明：</h2>'+
+                                    '<ul>'+
+                                        '<li>键盘上下左右控制方向</li>'+
+                                        '<li>Enter键暂停、开始</li>'+
+                                    '</ul>'+
+                                '</div>';
+                        var table = '<table style="border-collapse:collapse;display:inline-block;">';
+                        for(var i=0; i<_this.height; i++){
+                            var tr = '<tr>';
+                            for(var j=0; j<_this.width; j++){
+                                tr += '<td style="border:1px solid #eee;height:'+_this.unit+'px;width:'+_this.unit+'px;"></td>';
+                            }
+                            tr += '</tr>';
+                            table += tr;
+                        }
+                        table += '</table>';
+                        $("#"+_this.id).html('<div style="position:relative;">'+table+b+'</div>'+d);
+                        this.initSnake();
+                    }
+                }
+                
+                //生成实例
+                var newSnake = new snake({
+                    id: "snake",
+                    width: 30,
+                    height: 30,
+                    unit:10,
+                    snakeColor: "#31708f",
+                    foodColor: "#f0ad4e"
+                });
+                
+                
+                var prefixes = ['webkit','moz','ms','o'];
+                
+                function getHiddenProp(){
+                    // if 'hidden' is natively supported just return it
+                    if ('hidden' in document) return 'hidden';
+                    
+                    // otherwise loop over all the known prefixes until we find one
+                    for (var i = 0; i < prefixes.length; i++){
+                        if ((prefixes[i] + 'Hidden') in document) 
+                            return prefixes[i] + 'Hidden';
+                    }
+                 
+                    // otherwise it's not supported
+                    return null;
+                }
+            
+                function getVisibilityState() {
+                    if ('visibilityState' in document) return 'visibilityState';
+                    
+                    for (var i = 0; i < prefixes.length; i++) {
+                        if ((prefixes[i] + 'VisibilityState') in document)
+                            return prefixes[i] + 'VisibilityState';
+                    }
+                    
+                    // otherwise it's not supported
+                    return null;
+                }
+                
+                //检测坐标是否可用
+                function checkCoord(coord, coords){
+                    if(coords && coords.length > 0){
+                        for(var i=0; i<coords.length; i++){
+                            if(coords[i].x == coord.x && coords[i].y == coord.y){
+                                return i;
+                            }
+                        }
+                    }
+                    return -1;
+                }
+            });
+        </script>        
     </body>
 </html>
