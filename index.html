@@ -321,7 +321,7 @@
                             startY = e.originalEvent.changedTouches[0].pageY;
                         });
                         
-                        $("#snake").on("touchmove", _.throttle(function(e){
+                        $("#snake").on("touchmove", function(e){
                             endX = e.originalEvent.changedTouches[0].pageX,
                             endY = e.originalEvent.changedTouches[0].pageY;
                             distanceX = endX-startX;
@@ -351,7 +351,7 @@
                             _this.snakeMove();
                             _this.autoMove();
                             e.stopPropagation();
-                        }, 500));
+                        });
                         
                         
                         //重置
