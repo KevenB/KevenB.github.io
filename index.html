@@ -1,60 +1,59 @@
-{% extends '../base.html' %}
-    {% block title %}
-        <title>贪吃蛇</title>
-    {% endblock %}
-    
-    {% block styles %}
-    <style>
-        h1,h2,p{
-            margin:0;
-        }
-        h1{
-            line-height:30px;
-        }
-        h2{
-            line-height:30px;
-        }
-        p{
-            line-height:30px;
-        }
-        #start{
-            display:block;
-            width:50px;
-            height:50px;
-            border:2px solid #999;
-            border-radius:50px;
-            -webkit-border-radius:50px;
-            -moz-border-radius:50px;
-            position:absolute;
-            top:50%;
-            left:50%;
-            margin-left:-25px;
-            cursor:pointer;
-        }
-        #start:after{
-            display:block;
-            content:"";
-            width:0;
-            height:0;
-            border-width:15px 0 15px 30px;
-            border-style: solid;
-            border-color: transparent #999 transparent;
-            position:absolute;
-            left:13px;
-            top:8px;
-        }
-    </style>
-    {% endblock %}
-        
-    {% block body %}    
-        <div style="hieght:100%;text-align:center;">
+<!doctype html>
+<html>
+    <head>
+        <meta name="author" content="lifeijie" />
+        <meta name="description" content="这是首页" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+        <title>首页</title>
+        <style>
+            h1,h2,p{
+                margin:0;
+            }
+            h1{
+                line-height:30px;
+            }
+            h2{
+                line-height:30px;
+            }
+            p{
+                line-height:30px;
+            }
+            #start{
+                display:block;
+                width:50px;
+                height:50px;
+                border:2px solid #999;
+                border-radius:50px;
+                -webkit-border-radius:50px;
+                -moz-border-radius:50px;
+                position:absolute;
+                top:50%;
+                left:50%;
+                margin-left:-25px;
+                cursor:pointer;
+            }
+            #start:after{
+                display:block;
+                content:"";
+                width:0;
+                height:0;
+                border-width:15px 0 15px 30px;
+                border-style: solid;
+                border-color: transparent #999 transparent;
+                position:absolute;
+                left:13px;
+                top:8px;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="text-align:center;">
             <h1 style="line-height:30px;font-size:24px;font-weight:blod;text-align:center;">贪吃蛇</h1>
             <p>分数:<span id="score"></span></p>
             <div id="snake" style="text-align:center;display:inline-block;position:relative;"></div>
         </div>
-    {% endblock %}    
-    
-    {% block scripts %}
+        
+        <script src="js/jquery-1.11.3.min.js"></script>    
         <script>
             $(function(){
                 document.addEventListener('touchmove', function(e){
@@ -462,5 +461,6 @@
                     return -1;
                 }
             });
-        </script>
-    {% endblock %}
+        </script>       
+    </body>
+</html>
