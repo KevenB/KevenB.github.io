@@ -1,61 +1,66 @@
-<!doctype html>
-<html>
-    <head>
-        <meta name="author" content="lifeijie" />
-        <meta name="description" content="这是首页" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-        <title>首页</title>
-        <style>
-            h1,h2,p{
-                margin:0;
-            }
-            h1{
-                line-height:30px;
-            }
-            h2{
-                line-height:30px;
-            }
-            p{
-                line-height:30px;
-            }
-            #start{
-                display:block;
-                width:50px;
-                height:50px;
-                border:2px solid #999;
-                border-radius:50px;
-                -webkit-border-radius:50px;
-                -moz-border-radius:50px;
-                position:absolute;
-                top:50%;
-                left:50%;
-                margin-left:-25px;
-                cursor:pointer;
-            }
-            #start:after{
-                display:block;
-                content:"";
-                width:0;
-                height:0;
-                border-width:15px 0 15px 30px;
-                border-style: solid;
-                border-color: transparent #999 transparent;
-                position:absolute;
-                left:13px;
-                top:8px;
-            }
-        </style>
-    </head>
-    <body>
-        <div style="text-align:center;">
+{% extends '../base.html' %}
+    {% block title %}
+        <title>贪吃蛇</title>
+    {% endblock %}
+    
+    {% block styles %}
+    <style>
+        h1,h2,p{
+            margin:0;
+        }
+        h1{
+            line-height:30px;
+        }
+        h2{
+            line-height:30px;
+        }
+        p{
+            line-height:30px;
+        }
+        #start{
+            display:block;
+            width:50px;
+            height:50px;
+            border:2px solid #999;
+            border-radius:50px;
+            -webkit-border-radius:50px;
+            -moz-border-radius:50px;
+            position:absolute;
+            top:50%;
+            left:50%;
+            margin-left:-25px;
+            cursor:pointer;
+        }
+        #start:after{
+            display:block;
+            content:"";
+            width:0;
+            height:0;
+            border-width:15px 0 15px 30px;
+            border-style: solid;
+            border-color: transparent #999 transparent;
+            position:absolute;
+            left:13px;
+            top:8px;
+        }
+    </style>
+    {% endblock %}
+        
+    {% block body %}    
+        <div style="hieght:100%;text-align:center;">
             <h1 style="line-height:30px;font-size:24px;font-weight:blod;text-align:center;">贪吃蛇</h1>
             <p>分数:<span id="score"></span></p>
             <div id="snake" style="text-align:center;display:inline-block;position:relative;"></div>
         </div>
-        
-        <script src="js/jquery-1.11.3.min.js"></script>    
+    {% endblock %}    
+    
+    {% block scripts %}
         <script>
             $(function(){
+                document.addEventListener('touchmove', function(e){
+                    e.preventDefault();
+                }, { passive: false });
+            
                 /**
                     需实现的功能：
                         1、窗口不可见时自动暂停，可见时自动开始；
@@ -77,6 +82,7 @@
                     this.everyScore = 10;          //每次吃一个得分
                     this.gameOver = false;       
                     this.timer = null;
+                    
                     this.id = options.id;
                     this.width = options.width;
                     this.height = options.height;
@@ -86,6 +92,7 @@
                     this.coordColor = "#ccc";
                     
                     this.init();
+                    
                     this.attachEvent();
                 }
                 
@@ -157,32 +164,33 @@
                         }
                     },
                     
+                    
+                    
+                    /////////////////////////////////////////////////////
                     //蛇移动
                     snakeMove: function(){
-                        if(this.gameOver){
-                            return false;
-                        }
                         var nextCoord = JSON.parse(JSON.stringify(this.snakeCoords[0]));
-                        switch(this.direct){
-                            case 37:
+                        var direct = this.direct || "right";
+                        switch(direct){
+                            case "left":
                                 nextCoord.x--;
                                 if(nextCoord.x == -1){
                                     this.gameOver = true;
                                 }
                                 break;
-                            case 38:
+                            case "up":
                                 nextCoord.y--;
                                 if(nextCoord.y == -1){
                                     this.gameOver = true;
                                 }
                                 break;
-                            case 39:
+                            case "right":
                                 nextCoord.x++;
                                 if(nextCoord.x == this.width){
                                     this.gameOver = true;
                                 }
                                 break;
-                            case 40:
+                            case "down":
                                 nextCoord.y++;
                                 if(nextCoord.y == this.height){
                                     this.gameOver = true;
@@ -190,16 +198,13 @@
                                 break;
                         }
                         var lenth = this.snakeCoords.length - 1;
-                        
                         var foodIndex = checkCoord(nextCoord, this.foods);
-                        
                         if(foodIndex != -1){
                             this.score += this.everyScore;
                             $("#score").text(this.score);
                             this.foods.splice(foodIndex, 1);
                             lenth++;
                         }
-                        
                         var newCoords = [];
                         for(var i=0; i<lenth; i++){
                             var oldCoord = this.snakeCoords[i];
@@ -210,18 +215,13 @@
                             }
                             newCoords.push(oldCoord);
                         }
-                        
                         if(this.gameOver){
                             this.over();
                             return false;
                         }
-                        
                         newCoords.unshift(nextCoord);
-                        
                         this.snakeCoords = newCoords;
-                        
                         this.paintSnake();
-                        
                         if(this.foods.length == 0){
                             this.foods = this.createCoords(this.snakeCoords, 2);
                             this.paintFood(this.foods);
@@ -231,11 +231,9 @@
                     //自动移动
                     autoMove: function(){
                         var _this = this;
-                        if(_this.gameOver){
-                            return false;
-                        }
-                        if(_this.timer){
-                            _this.pause();
+                        _this.runing = true;
+                        if(this.timer){
+                            clearInterval(this.timer);
                         }
                         _this.timer = setInterval(function(){
                             _this.snakeMove();
@@ -246,6 +244,7 @@
                     pause: function(){
                         clearInterval(this.timer);
                         this.timer = null;
+                        //this.runing = false;
                     },
                     
                     //结束
@@ -253,12 +252,15 @@
                         this.gameOver = true;
                         clearInterval(this.timer);
                         this.timer = null;
-                        this.runing = false;
                         alert('Game Over!');
                     },
                     
                     //初始化蛇
                     initSnake: function(){
+                        if(this.timer){
+                            clearInterval(this.timer);
+                            this.timer = null;
+                        }
                         $(".mode").css({"display": "block"});
                         $("#score").text("");
                         this.gameOver = false;
@@ -277,60 +279,103 @@
                         var _this = this;
                         
                         $(document).on("keydown", function(key){
-                            if(_this.gameOver){
-                                return false;
-                            }
-                            if(!_this.runing){
-                                return false;
-                            }
                             if(key.keyCode == 37 || key.keyCode == 38 || key.keyCode == 39 || key.keyCode == 40){
-                                if(key.keyCode == 37 && _this.direct == 39 ||
-                                   key.keyCode == 38 && _this.direct == 40 ||
-                                   key.keyCode == 39 && _this.direct == 37 ||
-                                   key.keyCode == 40 && _this.direct == 38){
+                                if(key.keyCode == 37 && _this.direct == "right" ||
+                                   key.keyCode == 38 && _this.direct == "down" ||
+                                   key.keyCode == 39 && _this.direct == "left" ||
+                                   key.keyCode == 40 && _this.direct == "up"){
                                     return false;
                                 }
-                                _this.direct = key.keyCode;
-                                _this.pause();
+                                switch(key.keyCode){
+                                    case 37:
+                                        _this.direct = "left";
+                                        break;
+                                    case 38:
+                                        _this.direct = "up";
+                                        break;
+                                    case 39:
+                                        _this.direct = "right";
+                                        break;
+                                    case 40:
+                                        _this.direct = "down";
+                                        break;
+                                }
+                                if(_this.gameOver){
+                                    return false;
+                                }
                                 _this.snakeMove();
                                 _this.autoMove();
                             }else if(key.keyCode == 13){
                                 if(_this.timer){
+                                    _this.runing = false;
                                     _this.pause();
                                 }else{
-                                    _this.direct = 39; //默认向右
                                     _this.autoMove();
                                 }
                             }
                         });
                         
+                        //移动端事件
+                        var startX = 0, startY = 0;
+                        $("#snake").on("touchstart", function(e){
+                            startX = e.originalEvent.changedTouches[0].pageX,
+                            startY = e.originalEvent.changedTouches[0].pageY;
+                        });
+                        
+                        $("#snake").on("touchmove", _.throttle(function(e){
+                            endX = e.originalEvent.changedTouches[0].pageX,
+                            endY = e.originalEvent.changedTouches[0].pageY;
+                            distanceX = endX-startX;
+                            distanceY = endY-startY;
+                            //判断滑动方向
+                            if(Math.abs(distanceX)>Math.abs(distanceY) && distanceX>0){
+                                var _direct = "right";
+                                console.log('往右滑动');
+                            }else if(Math.abs(distanceX)>Math.abs(distanceY) && distanceX<0){
+                                var _direct = "left";
+                                console.log('往左滑动');
+                            }else if(Math.abs(distanceX)<Math.abs(distanceY) && distanceY<0){
+                                var _direct = "up";
+                                console.log('往上滑动');
+                            }else if(Math.abs(distanceX)<Math.abs(distanceY) && distanceY>0){
+                                var _direct = "down";
+                                console.log('往下滑动');
+                            }
+                            if(_direct == "left" && _this.direct == "right" ||
+                               _direct == "up" && _this.direct == "down" ||
+                               _direct == "right" && _this.direct == "left" ||
+                               _direct == "down" && _this.direct == "up"){
+                                return false;
+                            }
+                            _this.direct = _direct;
+                            _this.pause();
+                            _this.snakeMove();
+                            _this.autoMove();
+                            e.stopPropagation();
+                        }, 500));
+                        
+                        
                         //重置
                         $("#reset").on("click", function(){
-                            if(_this.timer){
-                                _this.pause();
-                            }
                             _this.initSnake();
                         });
                         
                         //开始
                         $("#start").on("click", function(){
                             $(".mode").css({"display": "none"});
-                            _this.runing = true;
+                            //_this.runing = true;
                         });
                         
                         var visProp = getHiddenProp();
                         if (visProp) {
                             var evtname = visProp.replace(/[H|h]idden/, '') + 'visibilitychange';
                             document.addEventListener(evtname, function () {
-                                if(!_this.runing){
-                                    return false;
-                                }
                                 if(document[getVisibilityState()] == "hidden"){
-                                    if(_this.timer){
-                                        _this.pause();
-                                    }
+                                    _this.pause();
                                 }else{
-                                    _this.autoMove();
+                                    if(_this.runing){
+                                        _this.autoMove();
+                                    }
                                 }
                             });
                         }
@@ -363,6 +408,8 @@
                         this.initSnake();
                     }
                 }
+                
+                //////////////////////////////////////////////////////////
                 
                 //生成实例
                 var newSnake = new snake({
@@ -415,6 +462,5 @@
                     return -1;
                 }
             });
-        </script>        
-    </body>
-</html>
+        </script>
+    {% endblock %}
